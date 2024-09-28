@@ -34,17 +34,22 @@ router.get('/admin', async (req, res) => {
         console.log(error);
     }
 });
-router.get('/admin/dashboard',authMiddleware,async (req, res) => {
-    try {
-        const data = await Post.find();
-        const user_id=req.userId
-        console.log(req.userId);
-        res.render('./admin/dashboard', { user_id,data, layout: adminLayout });
+router.get('/admin/dashboard', authMiddleware, async (req, res) => {
+  try {
+    const user_id = req.userId; // Get logged-in user's ID from middleware
+    console.log(user_id);
 
-    } catch (error) {
-        console.log(error);
-    }
+    // Find posts by the current user
+    const data = await Post.find({ user: user_id }); // Assuming 'user' field in Post stores user ID
+
+    // Render dashboard with the filtered data
+    res.render('./admin/dashboard', { user_id, data, layout: adminLayout });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send('Internal Server Error');
+  }
 });
+
 router.get('/admin/unauth', async (req, res) => {
     try {
 

@@ -3,14 +3,19 @@ const router = express.Router();
 const Post=require('../server/models/Post');
 const { route } = require('./admin');
 
-router.get('', async (req,res)=>{
-      try {
-    const data = await Post.find();
+router.get('', async (req, res) => {
+  try {
+    // Find posts where 'public' is true
+    const data = await Post.find({ public: true });
+
+    // Render index with the filtered posts
     res.render('index', { data });
   } catch (error) {
     console.log(error);
-  } 
+    res.status(500).send('Internal Server Error');
+  }
 });
+
 
 router.get('/post/:id', async (req, res) => {
   try {
