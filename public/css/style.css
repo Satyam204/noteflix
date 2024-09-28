@@ -75,7 +75,7 @@ textarea {
   
   .author__body {
     font-size: clamp(1.25rem, 0.61vw + 1.1rem, 1.58rem);;
-    margin: 5px 0 40px 0;
+    margin: 0px 0 4px 0;
   }
 
   .articles__heading {

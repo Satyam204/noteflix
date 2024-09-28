@@ -1,10 +1,10 @@
 <div class="author">
-  <h1 class="authour__heading">Welcome Admin</h1>
-  <p class="author__body">Total Post:<%=data.length%></p>
+  <h1 class="authour__heading">Welcome <%= user_name %></h1>
+  <p class="author__body">Total Notes:<%=data.length%></p>
   </div>
   <section class="articles">
     <div class="main_title"> 
-    <h2 class="articles__heading">Posts</h2>
+    <h2 class="articles__heading">Your Notes</h2>
       <a href="/admin/add-post/"  class="btn btn-dark">+ Add New</a>
     </div>
     <ul class="article-ul">

@@ -37,28 +37,22 @@ router.get('/admin', async (req, res) => {
 router.get('/admin/dashboard', authMiddleware, async (req, res) => {
   try {
     const user_id = req.userId; // Get logged-in user's ID from middleware
-    console.log(user_id);
+
+    // Find the user details using user_id
+    const user = await User.findById(user_id); // Assuming you have the user's name stored in the User model
+    const user_name = user.username; // Assuming 'username' is the field name in User schema
 
     // Find posts by the current user
     const data = await Post.find({ user: user_id }); // Assuming 'user' field in Post stores user ID
 
     // Render dashboard with the filtered data
-    res.render('./admin/dashboard', { user_id, data, layout: adminLayout });
+    res.render('./admin/dashboard', { user_name, user_id, data, layout: adminLayout });
   } catch (error) {
     console.log(error);
     res.status(500).send('Internal Server Error');
   }
 });
 
-router.get('/admin/unauth', async (req, res) => {
-    try {
-
-        res.render('./admin/unauth', { layout: adminLayout });
-
-    } catch (error) {
-        console.log(error);
-    }
-});
 
 
 router.post('/admin', async (req, res) => {
