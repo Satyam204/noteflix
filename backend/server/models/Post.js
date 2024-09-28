@@ -13,6 +13,13 @@ const PostSchema = new Schema({
   body: {
     type: String,
     required: true
+  },
+  user:{ type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  public:
+  {
+    type: Boolean,
+    require :false,
+    default: false
   }
 },{timestamps:true});
 

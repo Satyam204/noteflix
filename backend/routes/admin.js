@@ -37,6 +37,7 @@ router.get('/admin', async (req, res) => {
 router.get('/admin/dashboard',authMiddleware,async (req, res) => {
     try {
         const data = await Post.find();
+        console.log("hello");
         res.render('./admin/dashboard', { data, layout: adminLayout });
 
     } catch (error) {
