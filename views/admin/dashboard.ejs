@@ -5,13 +5,14 @@
   <section class="articles">
     <div class="main_title"> 
     <h2 class="articles__heading">Posts</h2>
+      <a href="/admin/add-post"  class="btn btn-dark">+ Add New</a>
     </div>
     <ul class="article-ul">
       <% data
         .sort((a, b) =>  new Date(b.createdAt)-new Date(a.createdAt))
         .forEach(post => { %>
         <li>
-          <a href="/admin/post/<%= post._id %>">
+          <a href="/post/<%= post._id %>">
             <span><%= post.title %></span>
             <span class="article-list__date"><%= post.createdAt.toDateString() %></span>
           </a>

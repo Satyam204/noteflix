@@ -1,0 +1,20 @@
+<a href="/" class="btn btn-outline-dark btn-sm">ADMIN Back</a>
+<hr>
+<div class="main-title">
+  <h2>Add New Post</h2>
+</div>
+
+<form action="/admin/add-post" method="POST">
+
+  <label for="title"><b>Title</b></label>
+  <input type="text" placeholder="Post Title" name="title">
+
+  <label for="author"><b>Author</b></label>
+  <input type="text" placeholder="Author" name="author">
+
+  <label for="body"><b>Content</b></label>
+  <textarea name="body" cols="50" rows="10"></textarea>
+
+  <input type="submit" value="Add" class="btn btn-dark">
+
+</form>

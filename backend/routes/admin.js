@@ -37,7 +37,7 @@ router.get('/admin', async (req, res) => {
 router.get('/admin/dashboard',authMiddleware,async (req, res) => {
     try {
         const data = await Post.find();
-        console.log("hello");
+        console.log(req.userId);
         res.render('./admin/dashboard', { data, layout: adminLayout });
 
     } catch (error) {
@@ -160,5 +160,58 @@ router.post('/register', async (req, res) => {
       console.log(error);
     }
   });
+router.get('/add-post', async (req, res) => {
+  try {
+    res.render('add-post');
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.post('/add-post', async (req, res) => {
+  try {
+    const newPost = new Post({
+      title: req.body.title,
+      author: req.body.author,
+      body: req.body.body,
+      user: req.body.userId
+    });
+
+    await Post.create(newPost);
+    res.redirect('/');
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+
+//post adding
+
+router.get('/admin/add-post', async (req, res) => {
+  console.log("hello",req.body.user)
+  try {
+    res.render('admin/add-post');
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+router.post('/admin/add-post', async (req, res) => {
+  try {
+    const newPost = new Post({
+      title: req.body.title,
+      author: req.body.author,
+      body: req.body.body,
+      user: req.body.userId
+    });
+
+    await Post.create(newPost);
+    res.redirect('/');
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+
 
 module.exports = router;
