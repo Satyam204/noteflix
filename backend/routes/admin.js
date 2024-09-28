@@ -199,17 +199,27 @@ router.get('/admin/add-post', authMiddleware, async (req, res) => {
 
 router.post('/admin/add-post', authMiddleware, async (req, res) => {
   try {
+    // Destructure fields from request body
+    const { title, author, body, userId, publish } = req.body;
+    console.log(publish);
+    // Create new post with the appropriate fields
     const newPost = new Post({
-      title: req.body.title,
-      author: req.body.author,
-      body: req.body.body,
-      user: req.body.userId // Use the user ID from the hidden input field
+      title: title,
+      author: author,
+      body: body,
+      user: userId, // Use the user ID from the hidden input field
+      public: publish === 'true' ? true : false, // Check if the 'publish' checkbox was checked
+      createdAt: Date.now()
     });
 
+    // Save the new post to the database
     await Post.create(newPost);
-    res.redirect('/admin/dashboard'); // Redirect to dashboard
+
+    // Redirect to the dashboard after the post is added
+    res.redirect('/admin/dashboard');
   } catch (error) {
     console.log(error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
