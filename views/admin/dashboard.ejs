@@ -1,0 +1,23 @@
+<div class="author">
+  <h1 class="authour__heading">Welcome Admin</h1>
+  <p class="author__body">Total Post:<%=data.length%></p>
+  </div>
+  <section class="articles">
+    <div class="main_title"> 
+    <h2 class="articles__heading">Posts</h2>
+    </div>
+    <ul class="article-ul">
+      <% data
+        .sort((a, b) =>  new Date(b.createdAt)-new Date(a.createdAt))
+        .forEach(post => { %>
+        <li>
+          <a href="/admin/post/<%= post._id %>">
+            <span><%= post.title %></span>
+            <span class="article-list__date"><%= post.createdAt.toDateString() %></span>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+      
+          
+  </section>

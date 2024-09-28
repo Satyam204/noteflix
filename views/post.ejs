@@ -1,0 +1,22 @@
+<h1 class="post_title"><%= data.title %></h1>
+<hr>
+<h5 >Author : <%=data.author %></h3>
+<p>Date : <%= data.createdAt.toDateString() %></p>
+<hr>
+<article class="article"><%= data.body %></article>
+<br>
+<div class="modefiying-posts" >
+  <a href="/edit-post/<%= data._id %>">Edit</a>
+</div>
+<hr>
+
+
+
+
+<div class="d-inline-flex p-2">
+<a href="/" class="btn btn-outline-dark btn-sm">👈Back</a>
+<button onclick="alert('Thank You😁')" class="btn btn-outline-dark btn-sm">❤️Like</button>
+<a class="btn btn-primary" href="/feedback" role="button">👎Dislike</a>
+</div>
+
+
