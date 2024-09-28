@@ -45,7 +45,7 @@ router.post('/add-post', async (req, res) => {
       title: req.body.title,
       author: req.body.author,
       body: req.body.body,
-      user: req.body.userId
+     
     });
 
     await Post.create(newPost);

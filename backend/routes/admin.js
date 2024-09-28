@@ -37,8 +37,9 @@ router.get('/admin', async (req, res) => {
 router.get('/admin/dashboard',authMiddleware,async (req, res) => {
     try {
         const data = await Post.find();
+        const user_id=req.userId
         console.log(req.userId);
-        res.render('./admin/dashboard', { data, layout: adminLayout });
+        res.render('./admin/dashboard', { user_id,data, layout: adminLayout });
 
     } catch (error) {
         console.log(error);
@@ -187,26 +188,26 @@ router.post('/add-post', async (req, res) => {
 
 //post adding
 
-router.get('/admin/add-post', async (req, res) => {
-  console.log("hello",req.body.user)
+router.get('/admin/add-post', authMiddleware, async (req, res) => {
   try {
-    res.render('admin/add-post');
+    const user_id = req.userId; // Retrieve user ID from the authenticated user
+    res.render('admin/add-post', { user_id }); // Pass the user_id to the EJS template
   } catch (error) {
     console.log(error);
   }
 });
 
-router.post('/admin/add-post', async (req, res) => {
+router.post('/admin/add-post', authMiddleware, async (req, res) => {
   try {
     const newPost = new Post({
       title: req.body.title,
       author: req.body.author,
       body: req.body.body,
-      user: req.body.userId
+      user: req.body.userId // Use the user ID from the hidden input field
     });
 
     await Post.create(newPost);
-    res.redirect('/');
+    res.redirect('/admin/dashboard'); // Redirect to dashboard
   } catch (error) {
     console.log(error);
   }

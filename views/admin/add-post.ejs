@@ -5,6 +5,7 @@
 </div>
 
 <form action="/admin/add-post" method="POST">
+  <input type="hidden" name="userId" value="<%= user_id %>"> <!-- Hidden user ID field -->
 
   <label for="title"><b>Title</b></label>
   <input type="text" placeholder="Post Title" name="title">
@@ -16,5 +17,4 @@
   <textarea name="body" cols="50" rows="10"></textarea>
 
   <input type="submit" value="Add" class="btn btn-dark">
-
 </form>
