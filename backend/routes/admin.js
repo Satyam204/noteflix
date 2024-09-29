@@ -4,224 +4,225 @@ const Post = require('../server/models/Post');
 const User = require('../server/models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto'); // For generating a unique token
 
-const adminLayout = '../views/layouts/admin'
+const adminLayout = '../views/layouts/admin';
 const jwtSecret = process.env.JWT_SECRET;
 
-const authMiddleware = (req, res, next ) => {
+// Middleware to check if user is authenticated and verified
+const authMiddleware = async (req, res, next) => {
     const token = req.cookies.token;
-  
-    if(!token) {
-        res.redirect('/admin/unauth');
+
+    if (!token) {
+        return res.redirect('/admin/unauth');
     }
-  
+
     try {
-      const decoded = jwt.verify(token, jwtSecret);
-      req.userId = decoded.userId;
-      next();
-    } catch(error) {
-      res.redirect('/admin/unauth');
-    }
-  }
+        const decoded = jwt.verify(token, jwtSecret);
+        req.userId = decoded.userId;
 
-
-router.get('/admin', async (req, res) => {
-    try {
-        //const data = await Post.find();
-        res.render('./admin/index', { layout: adminLayout });
-
+        // Find the user and check if they are verified
+        const user = await User.findById(req.userId);
+        if (!user || !user.isVerified) {
+            return res.redirect('/admin/unauth');
+        }
+        next();
     } catch (error) {
-        console.log(error);
+        console.error('Authentication error:', error);
+        return res.redirect('/admin/unauth');
     }
+};
+
+// Admin home route
+router.get('/admin', (req, res) => {
+    res.render('./admin/index', { layout: adminLayout });
 });
+
+// Admin dashboard route with authentication and verification check
 router.get('/admin/dashboard', authMiddleware, async (req, res) => {
-  try {
-    const user_id = req.userId; // Get logged-in user's ID from middleware
+    try {
+        const user = await User.findById(req.userId);
+        const posts = await Post.find({ user: req.userId });
 
-    // Find the user details using user_id
-    const user = await User.findById(user_id); // Assuming you have the user's name stored in the User model
-    const user_name = user.username; // Assuming 'username' is the field name in User schema
-
-    // Find posts by the current user
-    const data = await Post.find({ user: user_id }); // Assuming 'user' field in Post stores user ID
-
-    // Render dashboard with the filtered data
-    res.render('./admin/dashboard', { user_name, user_id, data, layout: adminLayout });
-  } catch (error) {
-    console.log(error);
-    res.status(500).send('Internal Server Error');
-  }
+        res.render('./admin/dashboard', { user_name: user.username, user_id: req.userId, data: posts, layout: adminLayout });
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
-
-
+// Admin login route
 router.post('/admin', async (req, res) => {
+    const { username, password } = req.body;
+
     try {
-      const { username, password } = req.body;
-      
-      const user = await User.findOne( { username } );
-  
-      if(!user) {
-        res.redirect('/admin/unauth');
-      }
-  
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-  
-      if(!isPasswordValid) {
-        res.redirect('/admin/unauth');
-      }
-  
-      const token = jwt.sign({ userId: user._id}, jwtSecret );
-      res.cookie('token', token, { httpOnly: true });
-      res.redirect('/admin/dashboard');
-  
+        const user = await User.findOne({ username });
+        if (!user || !user.isVerified) {
+            return res.redirect('/admin/unauth');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.redirect('/admin/unauth');
+        }
+
+        const token = jwt.sign({ userId: user._id }, jwtSecret);
+        res.cookie('token', token, { httpOnly: true });
+        return res.redirect('/admin/dashboard');
     } catch (error) {
-      console.log(error);
+        console.error('Login error:', error);
+        res.status(500).send('Internal Server Error');
     }
-  });
-
-router.get('/admin/post/:id',authMiddleware, async (req, res) => {
-    try {
-        let slug = req.params.id;
-
-        const data = await Post.findById({ _id: slug });
-
-        res.render('./admin/post', { data , layout: adminLayout});
-    } catch (error) {
-        console.log(error);
-    }
-
 });
 
-router.get('/admin/edit-post/:id', authMiddleware,async (req, res) => {
+// View single post route
+router.get('/admin/post/:id', authMiddleware, async (req, res) => {
     try {
-        const data = await Post.findOne({ _id: req.params.id });
-        res.render('./admin/edit-post', { data , layout: adminLayout})
+        const post = await Post.findById(req.params.id);
+        res.render('./admin/post', { data: post, layout: adminLayout });
     } catch (error) {
-        console.log(error);
+        console.error('Error fetching post:', error);
+        res.status(500).send('Internal Server Error');
     }
-
 });
-router.put('/admin/edit-post/:id', authMiddleware,async (req, res) => {
-    try {
 
+// Edit post route
+router.get('/admin/edit-post/:id', authMiddleware, async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        res.render('./admin/edit-post', { data: post, layout: adminLayout });
+    } catch (error) {
+        console.error('Error fetching post for editing:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+// Update post route
+router.put('/admin/edit-post/:id', authMiddleware, async (req, res) => {
+    try {
         await Post.findByIdAndUpdate(req.params.id, {
             title: req.body.title,
             author: req.body.author,
             body: req.body.body,
-            updatedAt: Date.now()
+            updatedAt: Date.now(),
         });
-
-        res.redirect(`/admin/post/${req.params.id}`);
-
+        return res.redirect(`/admin/post/${req.params.id}`);
     } catch (error) {
-        console.log(error);
+        console.error('Error updating post:', error);
+        res.status(500).send('Internal Server Error');
     }
-
 });
 
-
-
-router.delete('/admin/delete-post/:id',authMiddleware, async (req, res) => {
-
+// Delete post route
+router.delete('/admin/delete-post/:id', authMiddleware, async (req, res) => {
     try {
         await Post.deleteOne({ _id: req.params.id });
-        res.redirect('/admin/dashboard');
+        return res.redirect('/admin/dashboard');
     } catch (error) {
-        console.log(error);
+        console.error('Error deleting post:', error);
+        res.status(500).send('Internal Server Error');
     }
-
 });
 
-
+// Logout route
 router.get('/admin/logout', (req, res) => {
     res.clearCookie('token');
     res.redirect('/admin');
-  });
+});
 
-//Register
-
+// User registration route
 router.post('/register', async (req, res) => {
+    const { username, email, password } = req.body;
+
     try {
-      const { username, email,password } = req.body;
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      try {
-        const user = await User.create({ username, email,password:hashedPassword });
-        res.status(201).json({ message: 'User Created', user });
-      } catch (error) {
-        if(error.code === 11000) {
-          res.status(409).json({ message: 'User already in use'});
-        }
-        res.status(500).json({ message: 'Internal server error'})
-      }
-  
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+
+        const user = await User.create({
+            username,
+            email,
+            password: hashedPassword,
+            verificationToken,
+            isVerified: false,
+        });
+
+        // Setup Nodemailer transporter
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        // Create a verification link
+        const verificationLink = `http://localhost:5000/verify-email?token=${verificationToken}&userId=${user._id}`;
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Email Verification',
+            text: `Please click the following link to verify your email: ${verificationLink}`,
+        };
+
+        await transporter.sendMail(mailOptions);
+        // res.status(201).json({ message: 'User created. Please check your email to verify your account.', user });
+        res.render('admin/registration-success.ejs');
     } catch (error) {
-      console.log(error);
+        console.error('Error during registration:', error);
+        if (error.code === 11000) {
+            return res.status(409).json({ message: 'User already exists' });
+        }
+        res.status(500).json({ message: 'Internal Server Error' });
     }
-  });
-router.get('/add-post', async (req, res) => {
-  try {
-    res.render('add-post');
-  } catch (error) {
-    console.log(error);
-  }
 });
 
-router.post('/add-post', async (req, res) => {
-  try {
-    const newPost = new Post({
-      title: req.body.title,
-      author: req.body.author,
-      body: req.body.body,
-      user: req.body.userId
-    });
+// Email verification route
+router.get('/verify-email', async (req, res) => {
+    const { token, userId } = req.query;
 
-    await Post.create(newPost);
-    res.redirect('/');
-  } catch (error) {
-    console.log(error);
-  }
+    try {
+        const user = await User.findById(userId);
+        if (!user || user.verificationToken !== token) {
+            return res.status(400).send('Invalid verification link.');
+        }
+
+        user.isVerified = true;
+        user.verificationToken = null; // Clear the token
+        await user.save();
+
+        res.render('admin/verification-success.ejs');
+    } catch (error) {
+        console.error('Error verifying email:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
-
-//post adding
-
-router.get('/admin/add-post', authMiddleware, async (req, res) => {
-  try {
-    const user_id = req.userId; // Retrieve user ID from the authenticated user
-    res.render('admin/add-post', { user_id }); // Pass the user_id to the EJS template
-  } catch (error) {
-    console.log(error);
-  }
+// Add post route
+router.get('/admin/add-post', authMiddleware, (req, res) => {
+    res.render('admin/add-post', { user_id: req.userId });
 });
 
+// Post creation route
 router.post('/admin/add-post', authMiddleware, async (req, res) => {
-  try {
-    // Destructure fields from request body
-    const { title, author, body, userId, publish } = req.body;
-    console.log(publish);
-    // Create new post with the appropriate fields
-    const newPost = new Post({
-      title: title,
-      author: author,
-      body: body,
-      user: userId, // Use the user ID from the hidden input field
-      public: publish === 'true' ? true : false, // Check if the 'publish' checkbox was checked
-      createdAt: Date.now()
-    });
+    const { title, author, body, publish } = req.body;
 
-    // Save the new post to the database
-    await Post.create(newPost);
+    try {
+        const newPost = new Post({
+            title,
+            author,
+            body,
+            user: req.userId, // Use the user ID from the authenticated user
+            public: publish === 'true',
+            createdAt: Date.now(),
+        });
 
-    // Redirect to the dashboard after the post is added
-    res.redirect('/admin/dashboard');
-  } catch (error) {
-    console.log(error);
-    res.status(500).send('Internal Server Error');
-  }
+        await newPost.save();
+        return res.redirect('/admin/dashboard');
+    } catch (error) {
+        console.error('Error adding new post:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
-
-
 
 module.exports = router;
