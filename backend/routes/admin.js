@@ -157,7 +157,7 @@ router.post('/register', async (req, res) => {
         });
 
         // Create a verification link
-        const verificationLink = `http://localhost:5000/verify-email?token=${verificationToken}&userId=${user._id}`;
+        const verificationLink = `https://noteflix.onrender.com/verify-email?token=${verificationToken}&userId=${user._id}`;
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
